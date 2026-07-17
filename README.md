@@ -63,6 +63,7 @@ Keep the machine always-on (`min_machines_running = 1`): the daily 06:10 cron pa
 | `DATA_DIR` | `./.data` | Where the SQLite DB and session secret live (mount a volume here) |
 | `SESSION_SECRET` | auto-generated | HMAC secret for login cookies |
 | `PORT` | `3000` | HTTP port |
+| `CHORES_INGEST_TOKEN` | _unset_ | Bearer token for `POST /api/ingest/chore-payout` (HouseChores → pending deposit). Unset = endpoint disabled (503). |
 
 ## Tests
 
