@@ -1,0 +1,115 @@
+import { requireUser } from "@/lib/auth";
+import { checkingBalance } from "@/lib/ledger";
+import { portfolioView } from "@/lib/invest";
+import { formatCents, formatShares } from "@/lib/money";
+import { getSettings } from "@/lib/settings";
+import { buy, sell } from "@/actions/kid";
+import { ActionForm, SubmitButton } from "@/components/action-form";
+import { Card, PageTitle, inputClass, labelClass } from "@/components/ui";
+
+export const dynamic = "force-dynamic";
+
+export default async function InvestPage() {
+  const user = await requireUser();
+  const { currency } = getSettings();
+  const checking = checkingBalance(user.id);
+  const { positions, totalValue } = await portfolioView(user.id);
+  return (
+    <div>
+      <PageTitle
+        emoji="📈"
+        title="Invest"
+        sub="Buy pieces of real companies with your checking money. Prices update once a day after the market closes."
+      />
+      <div className="grid md:grid-cols-2 gap-4 mb-6">
+        <Card>
+          <div className="text-sm text-slate-500 dark:text-slate-400">Portfolio value</div>
+          <div className="text-3xl font-black tabular-nums text-amber-600 dark:text-amber-400">
+            {formatCents(totalValue, currency)}
+          </div>
+          <div className="text-xs text-slate-400 mt-1">
+            {formatCents(checking, currency)} in checking, ready to invest
+          </div>
+        </Card>
+        <Card>
+          <h2 className="font-bold mb-3">Buy a stock</h2>
+          <ActionForm action={buy} className="space-y-3">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className={labelClass}>Ticker</label>
+                <input name="ticker" placeholder="AAPL" className={`${inputClass} uppercase`} />
+              </div>
+              <div className="flex-1">
+                <label className={labelClass}>Amount</label>
+                <input name="amount" inputMode="decimal" placeholder="10.00" className={inputClass} />
+              </div>
+            </div>
+            <SubmitButton className="w-full">Buy 🛒</SubmitButton>
+            <p className="text-xs text-slate-400">
+              Try AAPL (Apple), DIS (Disney), RBLX (Roblox), NKE (Nike)…
+            </p>
+          </ActionForm>
+        </Card>
+      </div>
+      <h2 className="font-bold mb-2">Your companies</h2>
+      <div className="space-y-2">
+        {positions.length === 0 && (
+          <Card className="text-slate-400 text-sm">
+            You don&apos;t own any stocks yet. Buy your first piece of a company above!
+          </Card>
+        )}
+        {positions.map((p) => (
+          <Card key={p.id} className="!p-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex-1 min-w-44">
+                <div className="font-bold">{p.ticker}</div>
+                <div className="text-xs text-slate-400">
+                  {formatShares(p.shares)} shares · avg cost{" "}
+                  {formatCents(Math.round(p.avgCostCents), currency)}/share
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-bold tabular-nums">
+                  {p.value !== null ? formatCents(p.value, currency) : "price unavailable"}
+                </div>
+                {p.unrealized !== null && (
+                  <div
+                    className={`text-xs font-semibold tabular-nums ${
+                      p.unrealized >= 0
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-rose-600 dark:text-rose-400"
+                    }`}
+                  >
+                    {p.unrealized >= 0 ? "▲ +" : "▼ −"}
+                    {formatCents(Math.abs(p.unrealized), currency)}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-start gap-2 w-full sm:w-auto">
+                <ActionForm action={sell} className="flex items-start gap-2">
+                  <input type="hidden" name="ticker" value={p.ticker} />
+                  <input
+                    name="amount"
+                    inputMode="decimal"
+                    placeholder="Amount"
+                    className={`${inputClass} !w-28 !py-1.5 text-sm`}
+                  />
+                  <SubmitButton variant="subtle" className="!py-1.5 text-sm">
+                    Sell
+                  </SubmitButton>
+                </ActionForm>
+                <ActionForm action={sell}>
+                  <input type="hidden" name="ticker" value={p.ticker} />
+                  <input type="hidden" name="sellAll" value="true" />
+                  <SubmitButton variant="danger" className="!py-1.5 text-sm">
+                    Sell all
+                  </SubmitButton>
+                </ActionForm>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
