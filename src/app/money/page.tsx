@@ -21,8 +21,8 @@ export default async function MoneyPage() {
         sub={`Checking balance: ${formatCents(balance, currency)}. Requests go to a parent for approval — that's when the real cash changes hands.`}
       />
       <div className="grid md:grid-cols-2 gap-4 mb-8">
-        <Card>
-          <h2 className="font-bold mb-3">💰 Put money in</h2>
+        <Card className="accent-mint">
+          <h2 className="text-lg font-semibold mb-3">💰 Put money in</h2>
           <ActionForm action={requestMoney} className="space-y-3">
             <input type="hidden" name="kind" value="deposit" />
             <div>
@@ -40,8 +40,8 @@ export default async function MoneyPage() {
             <SubmitButton className="w-full">Request deposit</SubmitButton>
           </ActionForm>
         </Card>
-        <Card>
-          <h2 className="font-bold mb-3">🛍️ Take money out</h2>
+        <Card className="accent-bubblegum">
+          <h2 className="text-lg font-semibold mb-3">🛍️ Take money out</h2>
           <ActionForm action={requestMoney} className="space-y-3">
             <input type="hidden" name="kind" value="withdrawal" />
             <div>
@@ -58,7 +58,7 @@ export default async function MoneyPage() {
           </ActionForm>
         </Card>
       </div>
-      <h2 className="font-bold mb-2">History</h2>
+      <h2 className="text-xl font-semibold mb-2.5">History</h2>
       <TxList txs={recentTransactions(user.id, 50)} currency={currency} />
     </div>
   );

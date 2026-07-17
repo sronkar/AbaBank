@@ -23,16 +23,16 @@ export default async function InvestPage() {
       />
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         <Card>
-          <div className="text-sm text-slate-500 dark:text-slate-400">Portfolio value</div>
-          <div className="text-3xl font-black tabular-nums text-amber-600 dark:text-amber-400">
+          <div className="text-sm font-bold text-muted">Portfolio value</div>
+          <div className="text-3xl font-display font-semibold tabular-nums text-[var(--tangerine-deep)]">
             {formatCents(totalValue, currency)}
           </div>
-          <div className="text-xs text-slate-400 mt-1">
+          <div className="text-xs text-muted font-semibold mt-1">
             {formatCents(checking, currency)} in checking, ready to invest
           </div>
         </Card>
         <Card>
-          <h2 className="font-bold mb-3">Buy a stock</h2>
+          <h2 className="text-lg font-semibold mb-3">Buy a stock</h2>
           <ActionForm action={buy} className="space-y-3">
             <div className="flex gap-2">
               <div className="flex-1">
@@ -45,25 +45,25 @@ export default async function InvestPage() {
               </div>
             </div>
             <SubmitButton className="w-full">Buy 🛒</SubmitButton>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-muted font-semibold">
               Try AAPL (Apple), DIS (Disney), RBLX (Roblox), NKE (Nike)…
             </p>
           </ActionForm>
         </Card>
       </div>
-      <h2 className="font-bold mb-2">Your companies</h2>
+      <h2 className="text-xl font-semibold mb-2.5">Your companies</h2>
       <div className="space-y-2">
         {positions.length === 0 && (
-          <Card className="text-slate-400 text-sm">
+          <Card className="text-muted text-sm font-semibold">
             You don&apos;t own any stocks yet. Buy your first piece of a company above!
           </Card>
         )}
         {positions.map((p) => (
-          <Card key={p.id} className="!p-4">
+          <Card key={p.id} className="!p-4 accent-tangerine">
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex-1 min-w-44">
-                <div className="font-bold">{p.ticker}</div>
-                <div className="text-xs text-slate-400">
+                <div className="font-display font-semibold">{p.ticker}</div>
+                <div className="text-xs text-muted font-semibold">
                   {formatShares(p.shares)} shares · avg cost{" "}
                   {formatCents(Math.round(p.avgCostCents), currency)}/share
                 </div>
@@ -76,8 +76,8 @@ export default async function InvestPage() {
                   <div
                     className={`text-xs font-semibold tabular-nums ${
                       p.unrealized >= 0
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-rose-600 dark:text-rose-400"
+                        ? "text-[var(--pos)]"
+                        : "text-[var(--neg)]"
                     }`}
                   >
                     {p.unrealized >= 0 ? "▲ +" : "▼ −"}

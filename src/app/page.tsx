@@ -25,46 +25,56 @@ async function KidHome({ user }: { user: SessionUser }) {
   return (
     <div>
       <PageTitle emoji="👋" title={`Hi ${user.name}!`} sub="Here's your money today." />
-      <Card className="mb-4 bg-gradient-to-r from-indigo-600 to-violet-600 !ring-0 text-white">
-        <div className="text-sm/none opacity-80 mb-1">Everything you have</div>
-        <div className="text-4xl font-black tabular-nums">{formatCents(total, currency)}</div>
+      <Card className="mb-4 !bg-[var(--sun)] relative overflow-hidden">
+        <div className="absolute -right-4 -top-6 text-8xl opacity-20 rotate-12 select-none">💰</div>
+        <div className="text-sm font-bold text-[#2b2e4a]/70 mb-1">Everything you have</div>
+        <div className="text-5xl font-display font-semibold tabular-nums text-[#2b2e4a]">
+          {formatCents(total, currency)}
+        </div>
       </Card>
-      <div className="grid sm:grid-cols-3 gap-3 mb-6">
-        <StatCard emoji="💵" label="Checking" value={formatCents(checking, currency)} />
+      <div className="grid sm:grid-cols-3 gap-4 mb-6">
+        <StatCard emoji="💵" label="Checking" value={formatCents(checking, currency)} accent="accent-sky" />
         <StatCard
           emoji="🏦"
           label="Savings"
           value={formatCents(savings, currency)}
-          accent="text-emerald-600 dark:text-emerald-400"
+          accent="accent-mint"
           sub={`earns ${kidInterestPct(user)}% every month`}
         />
         <StatCard
           emoji="📈"
           label="Investments"
           value={formatCents(totalValue, currency)}
-          accent="text-amber-600 dark:text-amber-400"
+          accent="accent-tangerine"
         />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <QuickLink href="/money" emoji="💵" label="Deposit / Withdraw" />
-        <QuickLink href="/savings" emoji="🏦" label="Save it" />
-        <QuickLink href="/invest" emoji="📈" label="Invest it" />
-        <QuickLink href="/goals" emoji="🎯" label="My goals" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <QuickLink href="/money" emoji="💵" label="Deposit / Withdraw" accent="accent-sky" />
+        <QuickLink href="/savings" emoji="🏦" label="Save it" accent="accent-mint" />
+        <QuickLink href="/invest" emoji="📈" label="Invest it" accent="accent-tangerine" />
+        <QuickLink href="/goals" emoji="🎯" label="My goals" accent="accent-bubblegum" />
       </div>
-      <h2 className="font-bold mb-2">Recent activity</h2>
+      <h2 className="text-xl font-semibold mb-2.5">Recent activity</h2>
       <TxList txs={recentTransactions(user.id, 10)} currency={currency} />
     </div>
   );
 }
 
-function QuickLink({ href, emoji, label }: { href: string; emoji: string; label: string }) {
+function QuickLink({
+  href,
+  emoji,
+  label,
+  accent,
+}: {
+  href: string;
+  emoji: string;
+  label: string;
+  accent: string;
+}) {
   return (
-    <Link
-      href={href}
-      className="rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm p-4 text-center hover:ring-indigo-400 transition"
-    >
-      <div className="text-2xl mb-1">{emoji}</div>
-      <div className="text-sm font-medium">{label}</div>
+    <Link href={href} className={`card card-hover card-press text-center !p-4 ${accent}`}>
+      <div className="emoji-badge mx-auto mb-2">{emoji}</div>
+      <div className="text-sm font-bold">{label}</div>
     </Link>
   );
 }
@@ -89,39 +99,38 @@ async function ParentHome() {
     <div>
       <PageTitle emoji="🧑‍💼" title="The Bank" sub="What the bank owes its customers." />
       {pending.length > 0 && (
-        <Link
-          href="/parent/approvals"
-          className="block mb-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 ring-1 ring-amber-300 dark:ring-amber-800 p-4 font-medium text-amber-800 dark:text-amber-200"
-        >
+        <Link href="/parent/approvals" className="card card-hover card-press block mb-4 !bg-[var(--tangerine)] font-bold">
           ⏳ {pending.length} request{pending.length > 1 ? "s" : ""} waiting for your approval →
         </Link>
       )}
-      <Card className="mb-4">
-        <div className="text-sm text-slate-500 dark:text-slate-400">Total owed to the kids</div>
-        <div className="text-3xl font-black tabular-nums">{formatCents(totalOwed, currency)}</div>
+      <Card className="mb-4 accent-lavender">
+        <div className="text-sm font-bold text-muted">Total owed to the kids</div>
+        <div className="text-4xl font-display font-semibold tabular-nums text-[var(--accent-deep)]">
+          {formatCents(totalOwed, currency)}
+        </div>
       </Card>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {rows.map(({ kid, checking, savings, invested }) => (
           <Link key={kid.id} href={`/parent/kids/${kid.id}`} className="block">
-            <Card className="flex items-center gap-4 hover:ring-indigo-400 transition">
-              <div className="text-3xl">🧒</div>
+            <Card className="card-hover card-press flex items-center gap-4 accent-sky">
+              <div className="emoji-badge">🧒</div>
               <div className="flex-1">
-                <div className="font-bold">{kid.name}</div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">
+                <div className="font-display font-semibold text-lg">{kid.name}</div>
+                <div className="text-sm text-muted font-semibold">
                   💵 {formatCents(checking, currency)} · 🏦 {formatCents(savings, currency)} · 📈{" "}
                   {formatCents(invested, currency)}
                 </div>
               </div>
-              <div className="text-xl font-bold tabular-nums">
+              <div className="text-xl font-display font-semibold tabular-nums">
                 {formatCents(checking + savings + invested, currency)}
               </div>
             </Card>
           </Link>
         ))}
         {kids.length === 0 && (
-          <Card>
+          <Card className="font-semibold">
             No customers yet!{" "}
-            <Link className="text-indigo-500 hover:underline" href="/parent/kids">
+            <Link className="text-[var(--sky-deep)] underline decoration-2" href="/parent/kids">
               Add your kids →
             </Link>
           </Card>

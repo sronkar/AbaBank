@@ -18,9 +18,11 @@ export default async function LoginPage() {
   return (
     <div className="max-w-sm mx-auto mt-10">
       <div className="text-center mb-8">
-        <div className="text-5xl mb-2">🏛️</div>
-        <h1 className="text-3xl font-black text-indigo-600 dark:text-indigo-400">AbaBank</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">The family bank</p>
+        <div className="text-6xl mb-3 inline-block -rotate-6">🏛️</div>
+        <h1 className="text-4xl font-semibold">
+          Aba<span className="text-[var(--tangerine-deep)]">Bank</span>
+        </h1>
+        <p className="text-muted font-bold mt-1">The family bank</p>
       </div>
       <LoginForm users={users} />
     </div>

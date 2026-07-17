@@ -1,18 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fredoka, Nunito } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { currentUser } from "@/lib/auth";
 import { logout } from "@/actions/auth";
 import { pendingRequests } from "@/lib/ledger";
+import { NavLinks } from "@/components/nav-links";
+import { ThemeToggle } from "@/components/theme-toggle";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fredoka = Fredoka({
+  variable: "--font-fredoka",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
 });
 
@@ -20,6 +23,8 @@ export const metadata: Metadata = {
   title: "AbaBank",
   description: "The family bank — parents are the bank, kids are the customers",
 };
+
+const themeInit = `(function(){try{var t=localStorage.getItem("aba-theme");if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.dataset.theme=t}catch(e){}})()`;
 
 const kidLinks = [
   { href: "/", label: "🏠 Home" },
@@ -31,7 +36,13 @@ const kidLinks = [
 
 async function Nav() {
   const user = await currentUser();
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="fixed top-4 right-4 z-20">
+        <ThemeToggle />
+      </div>
+    );
+  }
   const pendingCount = user.role === "parent" ? pendingRequests().length : 0;
   const parentLinks = [
     { href: "/", label: "🏠 Home" },
@@ -42,28 +53,27 @@ async function Nav() {
   ];
   const links = user.role === "parent" ? parentLinks : kidLinks;
   return (
-    <header className="sticky top-0 z-10 bg-white/90 dark:bg-slate-950/90 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+    <header className="sticky top-0 z-10 border-b-2 border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur">
       <div className="mx-auto max-w-4xl px-4 py-3 flex items-center gap-3 flex-wrap">
-        <Link href="/" className="font-black text-lg text-indigo-600 dark:text-indigo-400">
-          🏛️ AbaBank
+        <Link
+          href="/"
+          className="font-display font-bold text-xl flex items-center gap-1.5 -rotate-1 hover:rotate-1 transition-transform"
+        >
+          <span className="text-2xl">🏛️</span>
+          <span>
+            Aba<span className="text-[var(--tangerine-deep)]">Bank</span>
+          </span>
         </Link>
-        <nav className="flex gap-1 flex-wrap text-sm">
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="rounded-lg px-2.5 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800"
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
-        <form action={logout} className="ml-auto flex items-center gap-2 text-sm">
-          <span className="text-slate-500 dark:text-slate-400">{user.name}</span>
-          <button className="rounded-lg px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700">
-            Log out
-          </button>
-        </form>
+        <NavLinks links={links} />
+        <div className="ml-auto flex items-center gap-2 text-sm">
+          <ThemeToggle />
+          <form action={logout} className="flex items-center gap-2">
+            <span className="text-muted font-bold hidden sm:inline">{user.name}</span>
+            <button className="pill bg-[var(--surface-2)] border-[var(--line)] !border-2">
+              Log out
+            </button>
+          </form>
+        </div>
       </div>
     </header>
   );
@@ -77,9 +87,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={`${fredoka.variable} ${nunito.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
         <Nav />
         <main className="mx-auto w-full max-w-4xl px-4 py-6 flex-1">{children}</main>
       </body>

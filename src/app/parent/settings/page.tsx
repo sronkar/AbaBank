@@ -22,7 +22,7 @@ export default async function SettingsPage() {
               defaultValue={settings.interestPctMonthly}
               className={inputClass}
             />
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-muted font-semibold mt-1">
               Credited on the 1st of each month on everything in savings. 5% keeps it exciting.
             </p>
           </div>
@@ -38,12 +38,12 @@ export default async function SettingsPage() {
               placeholder="ababank-cohen-family-x7k2"
               className={inputClass}
             />
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-muted font-semibold mt-1">
               Install the ntfy app, subscribe to a unique topic name, and you&apos;ll get a push when a
               kid requests money. Leave blank to disable.
             </p>
           </div>
-          <div className="text-sm text-slate-500 dark:text-slate-400">
+          <div className="text-sm font-bold text-muted">
             Family currency: <b>{settings.currency}</b> (set at first launch)
           </div>
           <SubmitButton>Save settings</SubmitButton>

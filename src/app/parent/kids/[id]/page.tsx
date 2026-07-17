@@ -37,27 +37,27 @@ export default async function KidDetailPage({ params }: { params: Promise<{ id: 
     <div>
       <PageTitle emoji="🧒" title={kid.name} sub="Manage this customer's account." />
       <div className="grid sm:grid-cols-3 gap-3 mb-6">
-        <StatCard emoji="💵" label="Checking" value={formatCents(checking, currency)} />
+        <StatCard emoji="💵" label="Checking" value={formatCents(checking, currency)} accent="accent-sky" />
         <StatCard
           emoji="🏦"
           label="Savings"
           value={formatCents(savings, currency)}
-          accent="text-emerald-600 dark:text-emerald-400"
+          accent="accent-mint"
           sub={`${kidInterestPct(kid)}%/mo · ${kidLockDays(kid)}-day lock`}
         />
         <StatCard
           emoji="📈"
           label="Investments"
           value={formatCents(totalValue, currency)}
-          accent="text-amber-600 dark:text-amber-400"
+          accent="accent-tangerine"
         />
       </div>
 
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         <Card>
-          <h2 className="font-bold mb-3">🗓️ Allowance</h2>
+          <h2 className="text-lg font-semibold mb-3">🗓️ Allowance</h2>
           {allowance?.active && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+            <p className="text-sm font-bold text-muted mb-3">
               Currently: {formatCents(allowance.amount, currency)}{" "}
               {allowance.cadence === "weekly"
                 ? `every ${WEEKDAYS[allowance.day]}`
@@ -95,13 +95,15 @@ export default async function KidDetailPage({ params }: { params: Promise<{ id: 
           {allowance?.active && (
             <form action={stopAllowance} className="mt-2">
               <input type="hidden" name="kidId" value={kid.id} />
-              <button className="text-sm text-rose-500 hover:underline">Stop allowance</button>
+              <button className="text-sm font-bold text-[var(--neg)] hover:underline decoration-2">
+                Stop allowance
+              </button>
             </form>
           )}
         </Card>
 
         <Card>
-          <h2 className="font-bold mb-3">⚙️ Account settings</h2>
+          <h2 className="text-lg font-semibold mb-3">⚙️ Account settings</h2>
           <ActionForm action={updateKidSettings} className="space-y-3">
             <input type="hidden" name="kidId" value={kid.id} />
             <div className="flex gap-2 flex-wrap">
@@ -134,8 +136,8 @@ export default async function KidDetailPage({ params }: { params: Promise<{ id: 
       </div>
 
       <Card className="mb-6">
-        <h2 className="font-bold mb-1">🛠️ Correction</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+        <h2 className="text-lg font-semibold mb-1">🛠️ Correction</h2>
+        <p className="text-sm font-bold text-muted mb-3">
           Fix mistakes with a signed adjustment. It shows in {kid.name}&apos;s history and the audit log.
         </p>
         <ActionForm action={adjust} className="space-y-3">
@@ -161,7 +163,7 @@ export default async function KidDetailPage({ params }: { params: Promise<{ id: 
         </ActionForm>
       </Card>
 
-      <h2 className="font-bold mb-2">Recent activity</h2>
+      <h2 className="text-xl font-semibold mb-2.5">Recent activity</h2>
       <TxList txs={recentTransactions(kid.id, 25)} currency={currency} />
     </div>
   );

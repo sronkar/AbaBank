@@ -2,16 +2,16 @@ import type { Tx } from "@/lib/ledger";
 import { formatCents } from "@/lib/money";
 import { Card } from "./ui";
 
-const KIND_META: Record<string, { emoji: string; label: string }> = {
-  deposit: { emoji: "💰", label: "Deposit" },
-  withdrawal: { emoji: "🛍️", label: "Withdrawal" },
-  allowance: { emoji: "🗓️", label: "Allowance" },
-  interest: { emoji: "✨", label: "Interest" },
-  savings_in: { emoji: "🏦", label: "To savings" },
-  savings_out: { emoji: "🔓", label: "From savings" },
-  buy: { emoji: "📈", label: "Bought stock" },
-  sell: { emoji: "📉", label: "Sold stock" },
-  adjustment: { emoji: "🛠️", label: "Correction" },
+const KIND_META: Record<string, { emoji: string; label: string; accent: string }> = {
+  deposit: { emoji: "💰", label: "Deposit", accent: "accent-mint" },
+  withdrawal: { emoji: "🛍️", label: "Withdrawal", accent: "accent-bubblegum" },
+  allowance: { emoji: "🗓️", label: "Allowance", accent: "accent-mint" },
+  interest: { emoji: "✨", label: "Interest", accent: "accent-tangerine" },
+  savings_in: { emoji: "🏦", label: "To savings", accent: "accent-sky" },
+  savings_out: { emoji: "🔓", label: "From savings", accent: "accent-sky" },
+  buy: { emoji: "📈", label: "Bought stock", accent: "accent-tangerine" },
+  sell: { emoji: "📉", label: "Sold stock", accent: "accent-tangerine" },
+  adjustment: { emoji: "🛠️", label: "Correction", accent: "accent-lavender" },
 };
 
 function txSign(tx: Tx): string {
@@ -29,35 +29,42 @@ export function TxList({
   showName?: boolean;
 }) {
   if (txs.length === 0) {
-    return <Card className="text-slate-400 text-sm">Nothing here yet.</Card>;
+    return <Card className="text-muted text-sm font-semibold">Nothing here yet.</Card>;
   }
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {txs.map((tx) => {
-        const meta = KIND_META[tx.kind] ?? { emoji: "❓", label: tx.kind };
+        const meta = KIND_META[tx.kind] ?? { emoji: "❓", label: tx.kind, accent: "" };
         const negative = txSign(tx) === "−";
         return (
-          <Card key={tx.id} className="flex items-center gap-3 !p-3">
-            <div className="text-xl">{meta.emoji}</div>
+          <Card key={tx.id} className={`flex items-center gap-3 !p-3 ${meta.accent}`}>
+            <div className="emoji-badge !w-10 !h-10 !text-lg">{meta.emoji}</div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium truncate">
+              <div className="text-sm font-bold truncate">
                 {showName && tx.userName ? `${tx.userName}: ` : ""}
                 {tx.description}
               </div>
-              <div className="text-xs text-slate-400">
-                {meta.label} · {new Date(tx.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+              <div className="text-xs text-muted font-semibold">
+                {meta.label} ·{" "}
+                {new Date(tx.createdAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
                 {tx.status === "pending" && " · ⏳ waiting for approval"}
                 {tx.status === "rejected" && " · ❌ rejected"}
               </div>
             </div>
             <div
-              className={`font-bold tabular-nums ${
-                tx.status !== "approved"
-                  ? "text-slate-400 line-through decoration-transparent"
+              className={`font-display font-semibold tabular-nums ${
+                tx.status === "pending"
+                  ? "text-muted"
+                  : tx.status === "rejected"
+                  ? "text-muted line-through"
                   : negative
-                  ? "text-rose-600 dark:text-rose-400"
-                  : "text-emerald-600 dark:text-emerald-400"
-              } ${tx.status === "rejected" ? "!line-through !decoration-current" : ""}`}
+                  ? "text-[var(--neg)]"
+                  : "text-[var(--pos)]"
+              }`}
             >
               {txSign(tx)}
               {formatCents(tx.amount, currency)}

@@ -9,11 +9,7 @@ export function SetupForm() {
   const [state, formAction] = useActionState(setupFamily, undefined);
   return (
     <form action={formAction} className="space-y-4">
-      {state?.error && (
-        <p className="rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 px-3 py-2 text-sm">
-          {state.error}
-        </p>
-      )}
+      {state?.error && <p className="banner banner-bad">😬 {state.error}</p>}
       <div>
         <label className={labelClass}>Your name</label>
         <input name="name" placeholder="Aba" className={inputClass} />
@@ -25,7 +21,7 @@ export function SetupForm() {
       <div>
         <label className={labelClass}>Family currency (3-letter code)</label>
         <input name="currency" defaultValue="USD" className={inputClass} />
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-muted font-semibold mt-1">
           e.g. USD or ILS. Stock prices are in USD and converted automatically.
         </p>
       </div>

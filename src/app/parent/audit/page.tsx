@@ -18,10 +18,10 @@ export default async function AuditPage() {
     <div>
       <PageTitle emoji="📋" title="Audit log" sub="Every action, recorded. The bank hides nothing." />
       <div className="space-y-1.5">
-        {rows.length === 0 && <Card className="text-slate-400 text-sm">Nothing yet.</Card>}
+        {rows.length === 0 && <Card className="text-muted text-sm font-semibold">Nothing yet.</Card>}
         {rows.map((row) => (
           <Card key={row.id} className="!p-3 text-sm flex items-baseline gap-2 flex-wrap">
-            <span className="text-slate-400 text-xs tabular-nums shrink-0">
+            <span className="text-muted text-xs tabular-nums shrink-0">
               {new Date(row.createdAt).toLocaleString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -30,13 +30,13 @@ export default async function AuditPage() {
               })}
             </span>
             <span className="font-semibold">{row.actorName ?? "system"}</span>
-            <span className="text-indigo-500">{row.action}</span>
-            <span className="text-slate-400">
+            <span className="font-bold text-[var(--lavender-deep)]">{row.action}</span>
+            <span className="text-muted">
               {row.entity}
               {row.entityId ? ` #${row.entityId}` : ""}
             </span>
             {row.detail && (
-              <code className="text-xs text-slate-400 break-all">{row.detail}</code>
+              <code className="text-xs text-muted font-semibold break-all">{row.detail}</code>
             )}
           </Card>
         ))}

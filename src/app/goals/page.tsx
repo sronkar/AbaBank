@@ -28,7 +28,7 @@ export default async function GoalsPage() {
         sub={`You have ${formatCents(saved, currency)} saved up (checking + savings). What are you saving for?`}
       />
       <Card className="mb-6">
-        <h2 className="font-bold mb-3">New goal</h2>
+        <h2 className="text-lg font-semibold mb-3">New goal</h2>
         <ActionForm action={createGoal} className="space-y-3">
           <div className="flex gap-2 flex-wrap">
             <div className="flex-1 min-w-40">
@@ -45,18 +45,18 @@ export default async function GoalsPage() {
       </Card>
       <div className="space-y-3">
         {goals.length === 0 && (
-          <Card className="text-slate-400 text-sm">No goals yet — dream big!</Card>
+          <Card className="text-muted text-sm font-semibold">No goals yet — dream big!</Card>
         )}
         {goals.map((goal) => {
           const pct = Math.min(100, Math.round((saved / goal.target) * 100));
           const done = saved >= goal.target;
           return (
-            <Card key={goal.id}>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="text-2xl">{done ? "🎉" : "🎯"}</div>
+            <Card key={goal.id} className={done ? "accent-mint" : "accent-bubblegum"}>
+              <div className="flex items-center gap-3 mb-2.5">
+                <div className="emoji-badge">{done ? "🎉" : "🎯"}</div>
                 <div className="flex-1">
-                  <div className="font-bold">{goal.name}</div>
-                  <div className="text-xs text-slate-400">
+                  <div className="font-display font-semibold">{goal.name}</div>
+                  <div className="text-xs text-muted font-semibold">
                     {formatCents(Math.min(saved, goal.target), currency)} of{" "}
                     {formatCents(goal.target, currency)}
                     {done && " — you can afford it!"}
@@ -64,14 +64,13 @@ export default async function GoalsPage() {
                 </div>
                 <form action={deleteGoal}>
                   <input type="hidden" name="goalId" value={goal.id} />
-                  <button className="text-xs text-slate-400 hover:text-rose-500">remove</button>
+                  <button className="text-xs text-muted font-semibold hover:text-[var(--neg)]">
+                    remove
+                  </button>
                 </form>
               </div>
-              <div className="h-3 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${done ? "bg-emerald-500" : "bg-indigo-500"}`}
-                  style={{ width: `${pct}%` }}
-                />
+              <div className="progress-track">
+                <div className="progress-fill" style={{ width: `${pct}%` }} />
               </div>
             </Card>
           );

@@ -34,16 +34,16 @@ export default async function SavingsPage() {
       />
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         <Card>
-          <div className="text-sm text-slate-500 dark:text-slate-400">Total saved</div>
-          <div className="text-3xl font-black tabular-nums text-emerald-600 dark:text-emerald-400">
+          <div className="text-sm font-bold text-muted">Total saved</div>
+          <div className="text-3xl font-display font-semibold tabular-nums text-[var(--mint-deep)]">
             {formatCents(total, currency)}
           </div>
-          <div className="text-xs text-slate-400 mt-1">
+          <div className="text-xs text-muted font-semibold mt-1">
             Next payday earns about {formatCents(Math.round((total * rate) / 100), currency)} ✨
           </div>
         </Card>
         <Card>
-          <h2 className="font-bold mb-3">Add to savings</h2>
+          <h2 className="text-lg font-semibold mb-3">Add to savings</h2>
           <ActionForm action={depositToSavings} className="space-y-3">
             <div>
               <label className={labelClass}>
@@ -55,10 +55,10 @@ export default async function SavingsPage() {
           </ActionForm>
         </Card>
       </div>
-      <h2 className="font-bold mb-2">Your savings lots</h2>
+      <h2 className="text-xl font-semibold mb-2.5">Your savings lots</h2>
       <div className="space-y-2">
         {lots.length === 0 && (
-          <Card className="text-slate-400 text-sm">
+          <Card className="text-muted text-sm font-semibold">
             Nothing saved yet — move some money in and watch it grow!
           </Card>
         )}
@@ -66,14 +66,14 @@ export default async function SavingsPage() {
           const mature = isMature(lot, now);
           const daysLeft = Math.ceil((lot.maturesAt - now) / (24 * 60 * 60 * 1000));
           return (
-            <Card key={lot.id} className="!p-4">
+            <Card key={lot.id} className="!p-4 accent-mint">
               <div className="flex items-center gap-3 flex-wrap">
-                <div className="text-xl">{lot.source === "interest" ? "✨" : mature ? "🔓" : "🔒"}</div>
+                <div className="emoji-badge !w-10 !h-10 !text-lg">{lot.source === "interest" ? "✨" : mature ? "🔓" : "🔒"}</div>
                 <div className="flex-1 min-w-40">
                   <div className="font-semibold tabular-nums">
                     {formatCents(lot.remaining, currency)}
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-muted font-semibold">
                     {lot.source === "interest" ? "Interest earned" : "Saved"} on{" "}
                     {new Date(lot.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     {" · "}
