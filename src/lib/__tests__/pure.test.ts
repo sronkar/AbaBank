@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { formatCents, parseAmount } from "../money";
+import { formatCents, parseAmount, isSupportedCurrency } from "../money";
 import { dueDates, monthsBetween } from "../dates";
+import { hashSecret, verifySecret, PIN_RE } from "../auth";
 
 describe("parseAmount", () => {
   it("parses plain and decimal amounts to cents", () => {
@@ -23,6 +24,36 @@ describe("formatCents", () => {
     expect(formatCents(123456, "USD")).toBe("$1,234.56");
     expect(formatCents(-50, "ILS")).toBe("-₪0.50");
     expect(formatCents(5, "EUR")).toBe("€0.05");
+  });
+});
+
+describe("isSupportedCurrency", () => {
+  it("accepts known codes and rejects junk", () => {
+    expect(isSupportedCurrency("USD")).toBe(true);
+    expect(isSupportedCurrency("ILS")).toBe(true);
+    expect(isSupportedCurrency("XYZ")).toBe(false);
+    expect(isSupportedCurrency("usd")).toBe(false); // callers uppercase first
+  });
+});
+
+describe("PIN rule", () => {
+  it("requires 6-10 digits", () => {
+    expect(PIN_RE.test("1234")).toBe(false);
+    expect(PIN_RE.test("123456")).toBe(true);
+    expect(PIN_RE.test("1234567890")).toBe(true);
+    expect(PIN_RE.test("12345678901")).toBe(false);
+    expect(PIN_RE.test("12ab56")).toBe(false);
+  });
+});
+
+describe("secret hashing (PINs & passphrase)", () => {
+  it("roundtrips and rejects wrong secrets", () => {
+    const stored = hashSecret("cohen-family-2026");
+    expect(verifySecret("cohen-family-2026", stored)).toBe(true);
+    expect(verifySecret("wrong", stored)).toBe(false);
+  });
+  it("salts so identical secrets hash differently", () => {
+    expect(hashSecret("123456")).not.toBe(hashSecret("123456"));
   });
 });
 

@@ -46,3 +46,24 @@ export function PageTitle({ emoji, title, sub }: { emoji: string; title: string;
 export const inputClass = "input";
 
 export const labelClass = "label";
+
+/**
+ * A labelled form control. Wrapping the control in the <label> gives an implicit
+ * association (no id juggling, and duplicate field names across forms stay valid).
+ */
+export function Field({
+  label,
+  className = "",
+  children,
+}: {
+  label: ReactNode;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <label className={`block ${className}`}>
+      <span className="label">{label}</span>
+      {children}
+    </label>
+  );
+}

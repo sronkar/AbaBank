@@ -19,11 +19,14 @@ export function getPositions(userId: number): Position[] {
 }
 
 /** Buy `amount` cents worth of a ticker at the latest EOD price. Updates average cost. */
+const INSUFFICIENT = "__insufficient__";
+
 export async function buyStock(
   userId: number,
   ticker: string,
   amount: number
 ): Promise<{ ok: true; shares: number; priceCents: number } | { ok: false; error: string }> {
+  // Cheap early-out for a nicer message; the authoritative check is inside the txn below.
   if (checkingBalance(userId) < amount) {
     return { ok: false, error: "Not enough money in checking" };
   }
@@ -33,9 +36,13 @@ export async function buyStock(
   const { priceCents, quote, fxRate } = priced;
   const shares = amount / priceCents;
   const now = Date.now();
-  db.transaction((txDb) => {
-    txDb
-      .insert(schema.transactions)
+  try {
+    db.transaction((txDb) => {
+      // Re-check balance atomically: the price fetch above yielded the event loop,
+      // so a concurrent buy could have spent the money in the meantime.
+      if (checkingBalance(userId) < amount) throw new Error(INSUFFICIENT);
+      txDb
+        .insert(schema.transactions)
       .values({
         userId,
         kind: "buy",
@@ -80,7 +87,13 @@ export async function buyStock(
         .values({ userId, ticker: quote.ticker, shares, avgCostCents: priceCents, updatedAt: now })
         .run();
     }
-  });
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message === INSUFFICIENT) {
+      return { ok: false, error: "Not enough money in checking" };
+    }
+    throw err;
+  }
   audit(userId, "buy", "position", null, { ticker: quote.ticker, amount, shares, priceCents });
   return { ok: true, shares, priceCents };
 }
@@ -107,58 +120,72 @@ export async function sellStock(
   if (!position || position.shares <= EPSILON_SHARES) {
     return { ok: false, error: `You don't own any ${tickerUp}` };
   }
+  if (!opts.sellAll && (!opts.amount || opts.amount <= 0)) {
+    return { ok: false, error: "Invalid amount" };
+  }
   const { currency } = getSettings();
   const priced = await getPriceCents(tickerUp, currency);
   if (!priced) return { ok: false, error: `Couldn't get a price for ${tickerUp}` };
   const { priceCents, quote, fxRate } = priced;
-
-  let sharesSold: number;
-  if (opts.sellAll) {
-    sharesSold = position.shares;
-  } else {
-    if (!opts.amount || opts.amount <= 0) return { ok: false, error: "Invalid amount" };
-    sharesSold = opts.amount / priceCents;
-    if (sharesSold > position.shares) sharesSold = position.shares;
-  }
-  const remaining = position.shares - sharesSold;
-  const liquidated = remaining <= EPSILON_SHARES;
-  if (liquidated) sharesSold = position.shares;
-
-  const proceeds = Math.round(sharesSold * priceCents);
-  const costBasis = Math.round(sharesSold * position.avgCostCents);
-  const profit = proceeds - costBasis;
   const now = Date.now();
 
-  db.transaction((txDb) => {
-    txDb
-      .insert(schema.transactions)
-      .values({
-        userId,
-        kind: "sell",
-        status: "approved",
-        amount: proceeds,
-        checkingDelta: proceeds,
-        description: `Sold ${formatShares(sharesSold)} ${tickerUp}`,
-        meta: JSON.stringify({
-          ticker: tickerUp,
-          shares: sharesSold,
-          priceCents,
-          avgCostCents: position.avgCostCents,
-          profit,
-          usdClose: quote.closeUsd,
-          fxRate,
-          asOf: quote.asOf,
-        }),
-        createdAt: now,
-        decidedAt: now,
-      })
-      .run();
-    txDb
-      .update(schema.positions)
-      .set({ shares: liquidated ? 0 : remaining, updatedAt: now })
-      .where(eq(schema.positions.id, position.id))
-      .run();
-  });
+  let proceeds = 0;
+  let profit = 0;
+  let sharesSold = 0;
+  try {
+    db.transaction((txDb) => {
+      // Re-read the position atomically — a concurrent sell during the price
+      // fetch could have reduced or liquidated it.
+      const fresh = txDb
+        .select()
+        .from(schema.positions)
+        .where(and(eq(schema.positions.userId, userId), eq(schema.positions.ticker, tickerUp)))
+        .get();
+      if (!fresh || fresh.shares <= EPSILON_SHARES) throw new Error(INSUFFICIENT);
+
+      sharesSold = opts.sellAll ? fresh.shares : opts.amount! / priceCents;
+      if (sharesSold > fresh.shares) sharesSold = fresh.shares;
+      const liquidated = fresh.shares - sharesSold <= EPSILON_SHARES;
+      if (liquidated) sharesSold = fresh.shares;
+
+      proceeds = Math.round(sharesSold * priceCents);
+      profit = proceeds - Math.round(sharesSold * fresh.avgCostCents);
+
+      txDb
+        .insert(schema.transactions)
+        .values({
+          userId,
+          kind: "sell",
+          status: "approved",
+          amount: proceeds,
+          checkingDelta: proceeds,
+          description: `Sold ${formatShares(sharesSold)} ${tickerUp}`,
+          meta: JSON.stringify({
+            ticker: tickerUp,
+            shares: sharesSold,
+            priceCents,
+            avgCostCents: fresh.avgCostCents,
+            profit,
+            usdClose: quote.closeUsd,
+            fxRate,
+            asOf: quote.asOf,
+          }),
+          createdAt: now,
+          decidedAt: now,
+        })
+        .run();
+      txDb
+        .update(schema.positions)
+        .set({ shares: liquidated ? 0 : fresh.shares - sharesSold, updatedAt: now })
+        .where(eq(schema.positions.id, fresh.id))
+        .run();
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message === INSUFFICIENT) {
+      return { ok: false, error: `You don't own any ${tickerUp}` };
+    }
+    throw err;
+  }
   audit(userId, "sell", "position", position.id, { ticker: tickerUp, sharesSold, proceeds, profit });
   return { ok: true, proceeds, profit, sharesSold };
 }

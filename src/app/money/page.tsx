@@ -4,7 +4,7 @@ import { formatCents } from "@/lib/money";
 import { getSettings } from "@/lib/settings";
 import { requestMoney } from "@/actions/kid";
 import { ActionForm, SubmitButton } from "@/components/action-form";
-import { Card, PageTitle, inputClass, labelClass } from "@/components/ui";
+import { Card, PageTitle, Field, inputClass } from "@/components/ui";
 import { TxList } from "@/components/tx-list";
 
 export const dynamic = "force-dynamic";
@@ -25,18 +25,16 @@ export default async function MoneyPage() {
           <h2 className="text-lg font-semibold mb-3">💰 Put money in</h2>
           <ActionForm action={requestMoney} className="space-y-3">
             <input type="hidden" name="kind" value="deposit" />
-            <div>
-              <label className={labelClass}>How much?</label>
+            <Field label="How much?">
               <input name="amount" inputMode="decimal" placeholder="10.00" className={inputClass} />
-            </div>
-            <div>
-              <label className={labelClass}>Where did it come from?</label>
+            </Field>
+            <Field label="Where did it come from?">
               <input
                 name="description"
                 placeholder="Birthday money from Grandma"
                 className={inputClass}
               />
-            </div>
+            </Field>
             <SubmitButton className="w-full">Request deposit</SubmitButton>
           </ActionForm>
         </Card>
@@ -44,14 +42,12 @@ export default async function MoneyPage() {
           <h2 className="text-lg font-semibold mb-3">🛍️ Take money out</h2>
           <ActionForm action={requestMoney} className="space-y-3">
             <input type="hidden" name="kind" value="withdrawal" />
-            <div>
-              <label className={labelClass}>How much?</label>
+            <Field label="How much?">
               <input name="amount" inputMode="decimal" placeholder="10.00" className={inputClass} />
-            </div>
-            <div>
-              <label className={labelClass}>What&apos;s it for?</label>
+            </Field>
+            <Field label="What&apos;s it for?">
               <input name="description" placeholder="LEGO set at the mall" className={inputClass} />
-            </div>
+            </Field>
             <SubmitButton className="w-full" variant="danger">
               Request withdrawal
             </SubmitButton>

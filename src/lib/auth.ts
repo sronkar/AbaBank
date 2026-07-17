@@ -7,7 +7,10 @@ import { db, schema } from "@/db";
 import { eq } from "drizzle-orm";
 
 const COOKIE_NAME = "aba_session";
+const GATE_COOKIE = "aba_gate";
 const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000; // 90 days — it's a family device
+const GATE_TTL_MS = 180 * 24 * 60 * 60 * 1000; // 180 days — a device clears the gate once
+const PROD = process.env.NODE_ENV === "production";
 
 export type SessionUser = typeof schema.users.$inferSelect;
 
@@ -25,6 +28,7 @@ function getSecret(): string {
   }
 }
 
+/** scrypt hash with per-secret salt — used for both PINs and the family passphrase. */
 export function hashPin(pin: string): string {
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.scryptSync(pin, salt, 32).toString("hex");
@@ -38,6 +42,13 @@ export function verifyPin(pin: string, stored: string): boolean {
   return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(candidate, "hex"));
 }
 
+// Alias for readability where a passphrase (not a PIN) is meant.
+export const hashSecret = hashPin;
+export const verifySecret = verifyPin;
+
+export const PIN_RE = /^\d{6,10}$/;
+export const PIN_RULE = "PIN must be 6-10 digits";
+
 function sign(payload: string): string {
   return crypto.createHmac("sha256", getSecret()).update(payload).digest("hex");
 }
@@ -48,6 +59,7 @@ export async function createSession(userId: number): Promise<void> {
   const store = await cookies();
   store.set(COOKIE_NAME, `${payload}.${sign(payload)}`, {
     httpOnly: true,
+    secure: PROD,
     sameSite: "lax",
     path: "/",
     expires: new Date(expires),
@@ -57,6 +69,40 @@ export async function createSession(userId: number): Promise<void> {
 export async function destroySession(): Promise<void> {
   const store = await cookies();
   store.delete(COOKIE_NAME);
+}
+
+// ---------- Family "gate": a shared passphrase that guards the login screen ----------
+
+function gateToken(passphraseHash: string): string {
+  return sign(`gate:${passphraseHash}`);
+}
+
+/** The family passphrase hash, or null if this family never set one (gate off). */
+export function gatePassphraseHash(): string | null {
+  const s = db.select().from(schema.familySettings).where(eq(schema.familySettings.id, 1)).get();
+  return s?.gatePassphraseHash ?? null;
+}
+
+/** True when the visitor may see the login screen (gate satisfied or not configured). */
+export async function isGateOpen(): Promise<boolean> {
+  const hash = gatePassphraseHash();
+  if (!hash) return true; // legacy family with no passphrase — don't lock them out
+  const store = await cookies();
+  const token = store.get(GATE_COOKIE)?.value;
+  if (!token) return false;
+  const expected = gateToken(hash);
+  return token.length === expected.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+}
+
+export async function openGate(passphraseHash: string): Promise<void> {
+  const store = await cookies();
+  store.set(GATE_COOKIE, gateToken(passphraseHash), {
+    httpOnly: true,
+    secure: PROD,
+    sameSite: "lax",
+    path: "/",
+    expires: new Date(Date.now() + GATE_TTL_MS),
+  });
 }
 
 export async function currentUser(): Promise<SessionUser | null> {

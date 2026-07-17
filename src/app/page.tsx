@@ -5,7 +5,7 @@ import { portfolioView } from "@/lib/invest";
 import { formatCents } from "@/lib/money";
 import { getSettings, kidInterestPct } from "@/lib/settings";
 import { db, schema } from "@/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Card, StatCard, PageTitle } from "@/components/ui";
 import { TxList } from "@/components/tx-list";
 
@@ -28,7 +28,7 @@ async function KidHome({ user }: { user: SessionUser }) {
       <Card className="mb-4 !bg-[var(--sun)] relative overflow-hidden">
         <div className="absolute -right-4 -top-6 text-8xl opacity-20 rotate-12 select-none">💰</div>
         <div className="text-sm font-bold text-[#2b2e4a]/70 mb-1">Everything you have</div>
-        <div className="text-5xl font-display font-semibold tabular-nums text-[#2b2e4a]">
+        <div className="text-4xl sm:text-5xl font-display font-semibold tabular-nums text-[#2b2e4a] break-words">
           {formatCents(total, currency)}
         </div>
       </Card>
@@ -81,7 +81,11 @@ function QuickLink({
 
 async function ParentHome() {
   const { currency } = getSettings();
-  const kids = db.select().from(schema.users).where(eq(schema.users.role, "kid")).all();
+  const kids = db
+    .select()
+    .from(schema.users)
+    .where(and(eq(schema.users.role, "kid"), eq(schema.users.active, true)))
+    .all();
   const pending = pendingRequests();
   const rows = await Promise.all(
     kids.map(async (kid) => {

@@ -5,7 +5,8 @@ import { formatCents } from "@/lib/money";
 import { getSettings, kidInterestPct, kidLockDays } from "@/lib/settings";
 import { depositToSavings, withdrawSavings } from "@/actions/kid";
 import { ActionForm, SubmitButton } from "@/components/action-form";
-import { Card, PageTitle, inputClass, labelClass } from "@/components/ui";
+import { ConfirmSubmit } from "@/components/confirm-submit";
+import { Card, PageTitle, Field, inputClass } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -45,12 +46,9 @@ export default async function SavingsPage() {
         <Card>
           <h2 className="text-lg font-semibold mb-3">Add to savings</h2>
           <ActionForm action={depositToSavings} className="space-y-3">
-            <div>
-              <label className={labelClass}>
-                Amount (you have {formatCents(checking, currency)} in checking)
-              </label>
+            <Field label={<>Amount (you have {formatCents(checking, currency)} in checking)</>}>
               <input name="amount" inputMode="decimal" placeholder="5.00" className={inputClass} />
-            </div>
+            </Field>
             <SubmitButton className="w-full">Lock it in 🔒</SubmitButton>
           </ActionForm>
         </Card>
@@ -86,11 +84,18 @@ export default async function SavingsPage() {
                     name="amount"
                     inputMode="decimal"
                     placeholder="Amount"
+                    aria-label="Amount to withdraw from this savings lot"
                     className={`${inputClass} !w-28 !py-1.5 text-sm`}
                   />
-                  <SubmitButton variant={mature ? "subtle" : "danger"} className="!py-1.5 text-sm">
-                    {mature ? "Withdraw" : "Break early"}
-                  </SubmitButton>
+                  {mature ? (
+                    <SubmitButton variant="subtle" className="!py-1.5 text-sm">
+                      Withdraw
+                    </SubmitButton>
+                  ) : (
+                    <ConfirmSubmit confirmLabel="Break it, lose interest" className="!py-1.5 text-sm">
+                      Break early
+                    </ConfirmSubmit>
+                  )}
                 </ActionForm>
               </div>
             </Card>

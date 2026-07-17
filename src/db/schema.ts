@@ -7,6 +7,7 @@ export const users = sqliteTable("users", {
   name: text("name").notNull().unique(),
   role: text("role", { enum: ["parent", "kid"] }).notNull(),
   pinHash: text("pin_hash").notNull(),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
   // per-kid overrides; null falls back to family settings
   interestPctMonthly: real("interest_pct_monthly"),
   lockDays: integer("lock_days"),
@@ -19,6 +20,8 @@ export const familySettings = sqliteTable("family_settings", {
   interestPctMonthly: real("interest_pct_monthly").notNull().default(5),
   lockDays: integer("lock_days").notNull().default(30),
   ntfyTopic: text("ntfy_topic"),
+  // scrypt hash of the shared family passphrase; null on legacy families (gate then disabled)
+  gatePassphraseHash: text("gate_passphrase_hash"),
   lastInterestRun: text("last_interest_run"), // "YYYY-MM" of last credited month
   lastJobsRun: text("last_jobs_run"), // "YYYY-MM-DD" of last daily job pass
 });

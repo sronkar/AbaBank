@@ -3,7 +3,16 @@ const SYMBOLS: Record<string, string> = {
   ILS: "₪",
   EUR: "€",
   GBP: "£",
+  CAD: "C$",
+  AUD: "A$",
 };
+
+/** Currencies the app supports (must all have a symbol above and be known to the FX API). */
+export const CURRENCY_LIST = Object.keys(SYMBOLS);
+
+export function isSupportedCurrency(code: string): boolean {
+  return CURRENCY_LIST.includes(code);
+}
 
 export function currencySymbol(currency: string): string {
   return SYMBOLS[currency] ?? currency + " ";

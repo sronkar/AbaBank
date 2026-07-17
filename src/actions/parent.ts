@@ -1,14 +1,24 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { db, schema } from "@/db";
-import { eq } from "drizzle-orm";
-import { hashPin, requireParent } from "@/lib/auth";
-import { adjustBalance, decideTransaction } from "@/lib/ledger";
+import { and, eq } from "drizzle-orm";
+import { hashPin, hashSecret, requireParent, PIN_RE, PIN_RULE } from "@/lib/auth";
+import { adjustBalance, checkingBalance, decideTransaction } from "@/lib/ledger";
 import { parseAmount } from "@/lib/money";
 import { audit } from "@/lib/audit";
 import { isoDate } from "@/lib/dates";
 import type { FormResult } from "./kid";
+
+/** Look up a kid by id, guarding that the target really is an active kid. */
+function findKid(kidId: number) {
+  return db
+    .select()
+    .from(schema.users)
+    .where(and(eq(schema.users.id, kidId), eq(schema.users.role, "kid")))
+    .get();
+}
 
 export async function decide(formData: FormData): Promise<void> {
   const parent = await requireParent();
@@ -25,7 +35,7 @@ export async function addFamilyMember(_prev: FormResult, formData: FormData): Pr
   const pin = String(formData.get("pin") ?? "").trim();
   const role = formData.get("role") === "parent" ? "parent" : "kid";
   if (!name) return { error: "Name is required" };
-  if (!/^\d{4,8}$/.test(pin)) return { error: "PIN must be 4-8 digits" };
+  if (!PIN_RE.test(pin)) return { error: PIN_RULE };
   const exists = db.select().from(schema.users).where(eq(schema.users.name, name)).get();
   if (exists) return { error: "That name is already taken" };
   const user = db
@@ -41,6 +51,7 @@ export async function addFamilyMember(_prev: FormResult, formData: FormData): Pr
 export async function updateKidSettings(_prev: FormResult, formData: FormData): Promise<FormResult> {
   const parent = await requireParent();
   const kidId = Number(formData.get("kidId"));
+  if (!findKid(kidId)) return { error: "That's not one of your kids' accounts" };
   const interestRaw = String(formData.get("interestPctMonthly") ?? "").trim();
   const lockRaw = String(formData.get("lockDays") ?? "").trim();
   const pinRaw = String(formData.get("pin") ?? "").trim();
@@ -61,7 +72,7 @@ export async function updateKidSettings(_prev: FormResult, formData: FormData): 
     updates.lockDays = null;
   }
   if (pinRaw !== "") {
-    if (!/^\d{4,8}$/.test(pinRaw)) return { error: "PIN must be 4-8 digits" };
+    if (!PIN_RE.test(pinRaw)) return { error: PIN_RULE };
     updates.pinHash = hashPin(pinRaw);
   }
   db.update(schema.users).set(updates).where(eq(schema.users.id, kidId)).run();
@@ -77,6 +88,7 @@ export async function updateKidSettings(_prev: FormResult, formData: FormData): 
 export async function upsertAllowance(_prev: FormResult, formData: FormData): Promise<FormResult> {
   const parent = await requireParent();
   const kidId = Number(formData.get("kidId"));
+  if (!findKid(kidId)) return { error: "That's not one of your kids' accounts" };
   const amount = parseAmount(String(formData.get("amount") ?? ""));
   const cadence = formData.get("cadence") === "monthly" ? "monthly" : "weekly";
   const day = Number(formData.get("day"));
@@ -109,6 +121,7 @@ export async function upsertAllowance(_prev: FormResult, formData: FormData): Pr
 export async function stopAllowance(formData: FormData): Promise<void> {
   const parent = await requireParent();
   const kidId = Number(formData.get("kidId"));
+  if (!findKid(kidId)) return;
   db.update(schema.allowances)
     .set({ active: false })
     .where(eq(schema.allowances.userId, kidId))
@@ -117,15 +130,31 @@ export async function stopAllowance(formData: FormData): Promise<void> {
   revalidatePath(`/parent/kids/${kidId}`);
 }
 
+/** Deactivate a kid's account (hides it from login without deleting their history). */
+export async function deactivateKid(formData: FormData): Promise<void> {
+  const parent = await requireParent();
+  const kidId = Number(formData.get("kidId"));
+  if (!findKid(kidId)) return;
+  db.update(schema.users).set({ active: false }).where(eq(schema.users.id, kidId)).run();
+  audit(parent.id, "user_deactivate", "user", kidId);
+  revalidatePath("/parent/kids");
+  redirect("/parent/kids");
+}
+
 export async function adjust(_prev: FormResult, formData: FormData): Promise<FormResult> {
   const parent = await requireParent();
   const kidId = Number(formData.get("kidId"));
+  if (!findKid(kidId)) return { error: "That's not one of your kids' accounts" };
   const amount = parseAmount(String(formData.get("amount") ?? ""));
   const direction = formData.get("direction") === "remove" ? -1 : 1;
   const reason = String(formData.get("reason") ?? "").trim();
   if (!amount) return { error: "Enter a valid amount" };
   if (reason.length < 3) return { error: "A reason is required — it goes in the audit log" };
-  adjustBalance(parent.id, kidId, amount * direction, reason);
+  const signed = amount * direction;
+  if (checkingBalance(kidId) + signed < 0) {
+    return { error: "That would put checking below zero — lower the amount" };
+  }
+  adjustBalance(parent.id, kidId, signed, reason);
   revalidatePath(`/parent/kids/${kidId}`);
   return { success: "Adjustment recorded" };
 }
@@ -135,17 +164,29 @@ export async function updateFamilySettings(_prev: FormResult, formData: FormData
   const interest = parseFloat(String(formData.get("interestPctMonthly") ?? ""));
   const lockDays = parseInt(String(formData.get("lockDays") ?? ""), 10);
   const ntfyTopic = String(formData.get("ntfyTopic") ?? "").trim() || null;
+  const passphrase = String(formData.get("passphrase") ?? "").trim();
   if (!Number.isFinite(interest) || interest < 0 || interest > 100) {
     return { error: "Interest must be 0-100%" };
   }
   if (!Number.isFinite(lockDays) || lockDays < 0 || lockDays > 365) {
     return { error: "Lock must be 0-365 days" };
   }
-  db.update(schema.familySettings)
-    .set({ interestPctMonthly: interest, lockDays, ntfyTopic })
-    .where(eq(schema.familySettings.id, 1))
-    .run();
-  audit(parent.id, "family_settings", "family_settings", 1, { interest, lockDays, ntfyTopic });
+  const update: Partial<typeof schema.familySettings.$inferInsert> = {
+    interestPctMonthly: interest,
+    lockDays,
+    ntfyTopic,
+  };
+  if (passphrase !== "") {
+    if (passphrase.length < 6) return { error: "Family password must be at least 6 characters" };
+    update.gatePassphraseHash = hashSecret(passphrase);
+  }
+  db.update(schema.familySettings).set(update).where(eq(schema.familySettings.id, 1)).run();
+  audit(parent.id, "family_settings", "family_settings", 1, {
+    interest,
+    lockDays,
+    ntfyTopic,
+    passphraseChanged: passphrase !== "",
+  });
   revalidatePath("/parent/settings");
-  return { success: "Settings saved" };
+  return { success: passphrase !== "" ? "Settings saved (family password updated)" : "Settings saved" };
 }

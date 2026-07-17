@@ -15,7 +15,11 @@ function createDb(): DB {
   sqlite.pragma("journal_mode = WAL");
   sqlite.pragma("foreign_keys = ON");
   const db = drizzle(sqlite, { schema });
-  migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
+  // `next build` fans out parallel workers that would race on the migration.
+  // Migrations run at server startup (and in dev) instead — never during build.
+  if (process.env.NEXT_PHASE !== "phase-production-build") {
+    migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
+  }
   return db;
 }
 

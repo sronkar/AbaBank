@@ -5,7 +5,8 @@ import { formatCents, formatShares } from "@/lib/money";
 import { getSettings } from "@/lib/settings";
 import { buy, sell } from "@/actions/kid";
 import { ActionForm, SubmitButton } from "@/components/action-form";
-import { Card, PageTitle, inputClass, labelClass } from "@/components/ui";
+import { ConfirmSubmit } from "@/components/confirm-submit";
+import { Card, PageTitle, Field, inputClass } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -35,14 +36,12 @@ export default async function InvestPage() {
           <h2 className="text-lg font-semibold mb-3">Buy a stock</h2>
           <ActionForm action={buy} className="space-y-3">
             <div className="flex gap-2">
-              <div className="flex-1">
-                <label className={labelClass}>Ticker</label>
+              <Field label="Ticker" className="flex-1">
                 <input name="ticker" placeholder="AAPL" className={`${inputClass} uppercase`} />
-              </div>
-              <div className="flex-1">
-                <label className={labelClass}>Amount</label>
+              </Field>
+              <Field label="Amount" className="flex-1">
                 <input name="amount" inputMode="decimal" placeholder="10.00" className={inputClass} />
-              </div>
+              </Field>
             </div>
             <SubmitButton className="w-full">Buy 🛒</SubmitButton>
             <p className="text-xs text-muted font-semibold">
@@ -92,6 +91,7 @@ export default async function InvestPage() {
                     name="amount"
                     inputMode="decimal"
                     placeholder="Amount"
+                    aria-label={`Amount of ${p.ticker} to sell`}
                     className={`${inputClass} !w-28 !py-1.5 text-sm`}
                   />
                   <SubmitButton variant="subtle" className="!py-1.5 text-sm">
@@ -101,9 +101,9 @@ export default async function InvestPage() {
                 <ActionForm action={sell}>
                   <input type="hidden" name="ticker" value={p.ticker} />
                   <input type="hidden" name="sellAll" value="true" />
-                  <SubmitButton variant="danger" className="!py-1.5 text-sm">
+                  <ConfirmSubmit confirmLabel="Sell it all" className="!py-1.5 text-sm">
                     Sell all
-                  </SubmitButton>
+                  </ConfirmSubmit>
                 </ActionForm>
               </div>
             </div>

@@ -11,9 +11,20 @@ AbaBank is a self-hosted ledger of parental IOUs. No real bank accounts, no brok
 - **Real investing, fractional shares** — buy "$10 of AAPL" at real Yahoo Finance prices (delayed/EOD-style, refreshed daily). Average-cost basis, profit/loss shown on every sale. No taxes, no fees — it's a family, not the IRS.
 - **Allowances on autopilot** — weekly or monthly auto-deposits per kid, with catch-up if the server was asleep.
 - **Goals** — "Nintendo Switch game, $60" with a progress bar.
-- **Parent console** — approval queue, per-kid interest/lock/allowance settings, signed corrections, and a full audit log. The bank hides nothing.
+- **Parent console** — approval queue, per-kid interest/lock/allowance settings, signed corrections, remove-account, and a full audit log. The bank hides nothing.
 - **Notifications** — optional push via [ntfy.sh](https://ntfy.sh) when a kid requests money.
-- **Multi-currency** — run the ledger in USD, ILS, EUR…; USD stock prices convert automatically (rates from frankfurter.dev).
+- **Multi-currency** — run the ledger in USD, ILS, EUR, GBP, CAD, or AUD; USD stock prices convert automatically (rates from frankfurter.dev).
+- **Installable** — a web app manifest + icons, so "Add to Home Screen" gives an app-like tile.
+
+## Security model
+
+It's a family ledger, not real money, but it can face the public internet — so:
+
+- **Family password gate.** Before the login screen (and the list of family names) is shown, a visitor enters one shared family password, set at first launch. Legacy installs can set it under **Settings**.
+- **Per-person PINs**, 6–10 digits, hashed with scrypt + per-user salt.
+- **Rate limiting.** Failed gate/PIN attempts are throttled per IP with a lockout, to blunt online brute-force.
+- **Signed, `httpOnly`, `secure` session cookies**; server actions enforce Next's origin checks.
+- Money-moving operations re-check balances/holdings **inside** the DB transaction, so concurrent requests can't double-spend.
 
 ## Quick start (development)
 

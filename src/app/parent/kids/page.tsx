@@ -1,16 +1,22 @@
 import Link from "next/link";
 import { requireParent } from "@/lib/auth";
 import { db, schema } from "@/db";
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { addFamilyMember } from "@/actions/parent";
 import { ActionForm, SubmitButton } from "@/components/action-form";
-import { Card, PageTitle, inputClass, labelClass } from "@/components/ui";
+import { Card, PageTitle, Field } from "@/components/ui";
+import { PinInput } from "@/components/pin-input";
 
 export const dynamic = "force-dynamic";
 
 export default async function KidsPage() {
   await requireParent();
-  const users = db.select().from(schema.users).orderBy(asc(schema.users.createdAt)).all();
+  const users = db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.active, true))
+    .orderBy(asc(schema.users.createdAt))
+    .all();
   return (
     <div>
       <PageTitle emoji="👧" title="Family members" sub="Your customers (and fellow bankers)." />
@@ -43,22 +49,19 @@ export default async function KidsPage() {
       <Card>
         <h2 className="text-lg font-semibold mb-3">Add a family member</h2>
         <ActionForm action={addFamilyMember} className="space-y-3">
-          <div className="flex gap-2 flex-wrap">
-            <div className="flex-1 min-w-32">
-              <label className={labelClass}>Name</label>
-              <input name="name" className={inputClass} />
+          <div className="flex gap-2 flex-wrap items-end">
+            <Field label="Name" className="flex-1 min-w-32">
+              <input name="name" className="input" />
+            </Field>
+            <div className="w-36">
+              <PinInput name="pin" label="PIN (6-10 digits)" />
             </div>
-            <div className="w-32">
-              <label className={labelClass}>PIN (4-8 digits)</label>
-              <input name="pin" inputMode="numeric" className={inputClass} />
-            </div>
-            <div className="w-32">
-              <label className={labelClass}>Role</label>
-              <select name="role" className={inputClass}>
+            <Field label="Role" className="w-32">
+              <select name="role" className="input">
                 <option value="kid">Kid</option>
                 <option value="parent">Parent</option>
               </select>
-            </div>
+            </Field>
           </div>
           <SubmitButton>Add</SubmitButton>
         </ActionForm>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useActionState } from "react";
 import { login } from "@/actions/auth";
 import { SubmitButton } from "@/components/action-form";
+import { PinInput } from "@/components/pin-input";
 
 type UserOption = { id: number; name: string; role: string };
 
@@ -54,14 +55,7 @@ export function LoginForm({ users }: { users: UserOption[] }) {
         </button>
       </div>
       {state?.error && <p className="banner banner-bad text-center">😬 {state.error}</p>}
-      <input
-        type="password"
-        inputMode="numeric"
-        name="pin"
-        placeholder="PIN"
-        autoFocus
-        className="input text-center !text-2xl tracking-[0.5em]"
-      />
+      <PinInput name="pin" placeholder="PIN" autoFocus big />
       <SubmitButton className="w-full">Open my bank 🔑</SubmitButton>
     </form>
   );

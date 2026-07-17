@@ -6,9 +6,16 @@ import { checkingBalance, savingsBalance, recentTransactions } from "@/lib/ledge
 import { portfolioView } from "@/lib/invest";
 import { formatCents } from "@/lib/money";
 import { getSettings, kidInterestPct, kidLockDays } from "@/lib/settings";
-import { adjust, stopAllowance, updateKidSettings, upsertAllowance } from "@/actions/parent";
+import {
+  adjust,
+  deactivateKid,
+  stopAllowance,
+  updateKidSettings,
+  upsertAllowance,
+} from "@/actions/parent";
+import { ConfirmSubmit } from "@/components/confirm-submit";
 import { ActionForm, SubmitButton } from "@/components/action-form";
-import { Card, PageTitle, StatCard, inputClass, labelClass } from "@/components/ui";
+import { Card, PageTitle, StatCard, Field, inputClass } from "@/components/ui";
 import { TxList } from "@/components/tx-list";
 
 export const dynamic = "force-dynamic";
@@ -67,26 +74,23 @@ export default async function KidDetailPage({ params }: { params: Promise<{ id: 
           <ActionForm action={upsertAllowance} className="space-y-3">
             <input type="hidden" name="kidId" value={kid.id} />
             <div className="flex gap-2 flex-wrap">
-              <div className="w-28">
-                <label className={labelClass}>Amount</label>
+              <Field label="Amount" className="w-28">
                 <input
                   name="amount"
                   inputMode="decimal"
                   defaultValue={allowance ? (allowance.amount / 100).toFixed(2) : ""}
                   className={inputClass}
                 />
-              </div>
-              <div className="w-32">
-                <label className={labelClass}>Repeats</label>
+              </Field>
+              <Field label="Repeats" className="w-32">
                 <select name="cadence" defaultValue={allowance?.cadence ?? "weekly"} className={inputClass}>
                   <option value="weekly">Weekly</option>
                   <option value="monthly">Monthly</option>
                 </select>
-              </div>
-              <div className="w-36">
-                <label className={labelClass}>Day (weekday 0-6 or 1-28)</label>
+              </Field>
+              <Field label="Day (weekday 0-6 or 1-28)" className="w-36">
                 <input name="day" inputMode="numeric" defaultValue={allowance?.day ?? 5} className={inputClass} />
-              </div>
+              </Field>
             </div>
             <div className="flex gap-2">
               <SubmitButton>Save allowance</SubmitButton>
@@ -107,29 +111,26 @@ export default async function KidDetailPage({ params }: { params: Promise<{ id: 
           <ActionForm action={updateKidSettings} className="space-y-3">
             <input type="hidden" name="kidId" value={kid.id} />
             <div className="flex gap-2 flex-wrap">
-              <div className="flex-1 min-w-28">
-                <label className={labelClass}>Interest %/month (blank = family default {famInterest}%)</label>
+              <Field label={<>Interest %/month (blank = family default {famInterest}%)</>} className="flex-1 min-w-28">
                 <input
                   name="interestPctMonthly"
                   inputMode="decimal"
                   defaultValue={kid.interestPctMonthly ?? ""}
                   className={inputClass}
                 />
-              </div>
-              <div className="flex-1 min-w-28">
-                <label className={labelClass}>Savings lock days (blank = family default {famLock})</label>
+              </Field>
+              <Field label={<>Savings lock days (blank = family default {famLock})</>} className="flex-1 min-w-28">
                 <input
                   name="lockDays"
                   inputMode="numeric"
                   defaultValue={kid.lockDays ?? ""}
                   className={inputClass}
                 />
-              </div>
+              </Field>
             </div>
-            <div>
-              <label className={labelClass}>Reset PIN (leave blank to keep)</label>
+            <Field label="Reset PIN (leave blank to keep)">
               <input name="pin" inputMode="numeric" className={inputClass} />
-            </div>
+            </Field>
             <SubmitButton>Save settings</SubmitButton>
           </ActionForm>
         </Card>
@@ -143,21 +144,18 @@ export default async function KidDetailPage({ params }: { params: Promise<{ id: 
         <ActionForm action={adjust} className="space-y-3">
           <input type="hidden" name="kidId" value={kid.id} />
           <div className="flex gap-2 flex-wrap">
-            <div className="w-32">
-              <label className={labelClass}>Direction</label>
-              <select name="direction" className={inputClass}>
+            <Field label="Direction" className="w-32">
+                <select name="direction" className={inputClass}>
                 <option value="add">Add money</option>
                 <option value="remove">Remove money</option>
               </select>
-            </div>
-            <div className="w-28">
-              <label className={labelClass}>Amount</label>
-              <input name="amount" inputMode="decimal" className={inputClass} />
-            </div>
-            <div className="flex-1 min-w-40">
-              <label className={labelClass}>Reason (required)</label>
-              <input name="reason" placeholder="Approved $50 instead of $5" className={inputClass} />
-            </div>
+              </Field>
+            <Field label="Amount" className="w-28">
+                <input name="amount" inputMode="decimal" className={inputClass} />
+              </Field>
+            <Field label="Reason (required)" className="flex-1 min-w-40">
+                <input name="reason" placeholder="Approved $50 instead of $5" className={inputClass} />
+              </Field>
           </div>
           <SubmitButton variant="danger">Apply correction</SubmitButton>
         </ActionForm>
@@ -165,6 +163,18 @@ export default async function KidDetailPage({ params }: { params: Promise<{ id: 
 
       <h2 className="text-xl font-semibold mb-2.5">Recent activity</h2>
       <TxList txs={recentTransactions(kid.id, 25)} currency={currency} />
+
+      <Card className="mt-6 accent-bubblegum">
+        <h2 className="text-lg font-semibold mb-1">🗑️ Remove account</h2>
+        <p className="text-sm font-bold text-muted mb-3">
+          Hides {kid.name} from the login screen. Their history stays in the records; nothing is
+          deleted.
+        </p>
+        <form action={deactivateKid}>
+          <input type="hidden" name="kidId" value={kid.id} />
+          <ConfirmSubmit confirmLabel={`Remove ${kid.name}`}>Remove {kid.name}</ConfirmSubmit>
+        </form>
+      </Card>
     </div>
   );
 }

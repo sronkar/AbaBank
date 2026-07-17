@@ -3,28 +3,37 @@
 import { useActionState } from "react";
 import { setupFamily } from "@/actions/auth";
 import { SubmitButton } from "@/components/action-form";
-import { inputClass, labelClass } from "@/components/ui";
+import { PinInput } from "@/components/pin-input";
+import { CURRENCY_LIST } from "@/lib/money";
+import { Field } from "@/components/ui";
 
 export function SetupForm() {
   const [state, formAction] = useActionState(setupFamily, undefined);
   return (
     <form action={formAction} className="space-y-4">
       {state?.error && <p className="banner banner-bad">😬 {state.error}</p>}
-      <div>
-        <label className={labelClass}>Your name</label>
-        <input name="name" placeholder="Aba" className={inputClass} />
-      </div>
-      <div>
-        <label className={labelClass}>Choose a PIN (4-8 digits)</label>
-        <input name="pin" type="password" inputMode="numeric" className={inputClass} />
-      </div>
-      <div>
-        <label className={labelClass}>Family currency (3-letter code)</label>
-        <input name="currency" defaultValue="USD" className={inputClass} />
+      <Field label="Your name">
+        <input name="name" placeholder="Aba" className="input" />
+      </Field>
+      <PinInput name="pin" label="Choose a PIN (6-10 digits)" />
+      <PinInput
+        name="passphrase"
+        label="Family password (shared by everyone on their devices)"
+        numeric={false}
+        placeholder="e.g. cohen-family-2026"
+      />
+      <Field label="Family currency">
+        <select name="currency" defaultValue="USD" className="input">
+          {CURRENCY_LIST.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
         <p className="text-xs text-muted font-semibold mt-1">
-          e.g. USD or ILS. Stock prices are in USD and converted automatically.
+          Stock prices are in USD and converted automatically.
         </p>
-      </div>
+      </Field>
       <SubmitButton className="w-full">Open the bank 🎉</SubmitButton>
     </form>
   );

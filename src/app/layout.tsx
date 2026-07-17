@@ -22,6 +22,11 @@ const nunito = Nunito({
 export const metadata: Metadata = {
   title: "AbaBank",
   description: "The family bank — parents are the bank, kids are the customers",
+  appleWebApp: { capable: true, title: "AbaBank", statusBarStyle: "default" },
+};
+
+export const viewport = {
+  themeColor: "#ffd84d",
 };
 
 const themeInit = `(function(){try{var t=localStorage.getItem("aba-theme");if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.dataset.theme=t}catch(e){}})()`;

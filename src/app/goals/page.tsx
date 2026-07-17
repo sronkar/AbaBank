@@ -6,7 +6,7 @@ import { db, schema } from "@/db";
 import { desc, eq } from "drizzle-orm";
 import { createGoal, deleteGoal } from "@/actions/kid";
 import { ActionForm, SubmitButton } from "@/components/action-form";
-import { Card, PageTitle, inputClass, labelClass } from "@/components/ui";
+import { Card, PageTitle, Field, inputClass } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -31,14 +31,12 @@ export default async function GoalsPage() {
         <h2 className="text-lg font-semibold mb-3">New goal</h2>
         <ActionForm action={createGoal} className="space-y-3">
           <div className="flex gap-2 flex-wrap">
-            <div className="flex-1 min-w-40">
-              <label className={labelClass}>What do you want?</label>
+            <Field label="What do you want?" className="flex-1 min-w-40">
               <input name="name" placeholder="Nintendo Switch game" className={inputClass} />
-            </div>
-            <div className="w-32">
-              <label className={labelClass}>It costs</label>
+            </Field>
+            <Field label="It costs" className="w-32">
               <input name="target" inputMode="decimal" placeholder="60.00" className={inputClass} />
-            </div>
+            </Field>
           </div>
           <SubmitButton>Set my goal</SubmitButton>
         </ActionForm>
