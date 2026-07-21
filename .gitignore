@@ -42,3 +42,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Personal Claude Code settings (never commit — contains auto-trade permissions)
+.claude/settings.local.json
