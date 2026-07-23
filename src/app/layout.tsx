@@ -37,6 +37,7 @@ const kidLinks = [
   { href: "/savings", label: "🏦 Savings" },
   { href: "/invest", label: "📈 Invest" },
   { href: "/goals", label: "🎯 Goals" },
+  { href: "/roblox", label: "🎮 Roblox" },
 ];
 
 async function Nav() {

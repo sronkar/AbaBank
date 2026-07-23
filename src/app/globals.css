@@ -270,6 +270,61 @@ h3,
   }
 }
 
+/* ---------- Code block (Roblox script output) ---------- */
+.codeblock {
+  margin: 0;
+  padding: 1rem 1.1rem;
+  border: 2px solid var(--line);
+  border-radius: 1rem;
+  background: #1b1e36;
+  color: #f4efe2;
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.35);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 4;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: 2px solid var(--line);
+  border-radius: 9999px;
+  padding: 0.3rem 0.75rem;
+  background: var(--surface);
+  box-shadow: 2px 2px 0 var(--shadow);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+}
+.chip:hover {
+  background: var(--surface-2);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+.chip:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--shadow);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.75rem;
+  border: 2px solid var(--line);
+  border-radius: 9999px;
+  padding: 0.15rem 0.6rem;
+  background: var(--surface-2);
+}
+
 /* accent helpers: set --accent for emoji badges, progress bars, hero cards */
 .accent-sky {
   --accent: var(--sky);
