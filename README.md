@@ -63,6 +63,22 @@ Keep the machine always-on (`min_machines_running = 1`): the daily 06:10 cron pa
 | `DATA_DIR` | `./.data` | Where the SQLite DB and session secret live (mount a volume here) |
 | `SESSION_SECRET` | auto-generated | HMAC secret for login cookies |
 | `PORT` | `3000` | HTTP port |
+| `CHORES_INGEST_TOKEN` | _(unset)_ | Bearer token for the chore-payout ingest API; unset disables the endpoint. |
+
+## Chore payouts (ingest API)
+
+The companion HouseChores app cashes a kid's points out to the bank by POSTing
+to `POST /api/ingest/chore-payout`. The endpoint creates a **pending** deposit —
+money only moves once a parent approves it in AbaBank.
+
+- **Auth:** bearer token via the `Authorization: Bearer <CHORES_INGEST_TOKEN>`
+  header. If `CHORES_INGEST_TOKEN` is unset the endpoint returns `503` (disabled).
+- **Idempotent** on `externalId`: retrying the same payout returns the existing
+  transaction instead of double-crediting. The `externalId` is recorded in
+  `transactions.meta` (no schema migration).
+- **Request body:** `{ externalId, userId | userName, amountCents, description?, points? }`.
+  Amounts are positive integer cents; the target must be an active kid account.
+- **Reply:** `{ ok, txId, idempotent }`.
 
 ## Tests
 
